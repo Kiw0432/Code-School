@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#DCC5B2">
+  <meta name="format-detection" content="telephone=no">
+  <title>ระบบห้องเรียน M5/1</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" 
+    onerror="window._firebaseLoadError=true;console.error('❌ โหลด firebase-app-compat.js ไม่ได้')"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js" 
+    onerror="window._firebaseLoadError=true;console.error('❌ โหลด firebase-auth-compat.js ไม่ได้')"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" 
+    onerror="window._firebaseLoadError=true;console.error('❌ โหลด firebase-firestore-compat.js ไม่ได้')"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js" 
+    onerror="window._firebaseLoadError=true;console.error('❌ โหลด firebase-storage-compat.js ไม่ได้')"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@latest"></script>
+
+  <style>
+    :root {
+      --c1: #FAF7F3; --c2: #F0E4D3; --c3: #DCC5B2; --c4: #D9A299;
+      --text: #5c4d45; --green: #89b89a; --red: #e58d8d; --yellow: #e5c08d; --blue: #89aeb8;
+      --vh: 1vh;
+    }
+
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      font-family: 'Noto Sans Thai', 'Sarabun', 'Prompt', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: var(--c1);
+      color: var(--text);
+    }
+
+    /* Reduce animations on mobile */
+    @media (max-width: 768px) {
+      * {
+        transition: none !important;
+        animation-duration: 0.15s !important;
+      }
+      
+      .slide {
+        transition: 0.3s !important;
+      }
+      
+      .slide img {
+        transition: 0.3s !important;
+      }
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 20px;
+      padding-bottom: calc(130px + env(safe-area-inset-bottom));
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--c3), var(--c4));
+      padding: 16px 20px;
+      border-radius: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+      color: white;
+    }
+
+    .logo h1 {
+      font-size: 1.6rem;
+      line-height: 1.2;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .top-actions button {
+      border: none;
+      padding: 10px 14px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .setting-btn {
+      background: #b89c82;
+      color: white;
+    }
+
+    .logout-btn {
+      background: #de7f7f;
+      color: white;
+    }
+
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    }
+
+    .login-card {
+      max-width: 420px;
+      margin: 40px auto;
+      padding: 30px;
+      border-radius: 34px;
+    }
+
+    .login-tabs {
+      display: flex;
+      background: var(--c1);
+      border-radius: 16px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+
+    .login-tab {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      background: transparent;
+      color: #bbb;
+      transition: 0.2s;
+    }
+
+    .login-tab.active {
+      background: var(--c4);
+      color: white;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      border: none;
+      background: var(--c1);
+      padding: 13px;
+      border-radius: 14px;
+      outline: none;
+      margin-bottom: 12px;
+      font-size: 16px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 13px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-main { background: var(--c4); color: white; }
+    .btn-soft { background: var(--c2); color: var(--text); }
+    .btn-danger { background: var(--red); color: white; }
+    .btn-green { background: var(--green); color: white; }
+    .btn-blue { background: var(--blue); color: white; }
+
+    /* Minimal animations */
+    .splash-page {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--c3), var(--c4));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      color: white;
+      transition: 0.5s ease-out;
+    }
+
+    .splash-page.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 10px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: 24px;
+      max-height: 90vh;
+      overflow-y: auto;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    /* Status messages */
+    .status-box {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 14px 20px;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      z-index: 2000;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateX(-50%) translateY(100px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--c2);
+      border-top-color: var(--c4);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Splash Page -->
+  <div id="splashPage" class="splash-page">
+    <div class="loading-spinner"></div>
+    <p id="splashMsg" style="margin-top: 20px; font-size: 1rem;">กำลังเชื่อมต่อ Firebase...</p>
+  </div>
+
+  <!-- Login Page -->
+  <div id="loginPage" class="container" style="min-height: 100vh; display: flex; align-items: center;">
+    <div class="card login-card">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <p style="font-size: 3rem;">🏫</p>
+        <h1>ระบบห้องเรียน M5/1</h1>
+      </div>
+
+      <div class="login-tabs">
+        <button class="login-tab active" onclick="switchLoginTab('login')">เข้าสู่ระบบ</button>
+        <button class="login-tab" onclick="switchLoginTab('register')">สมัครสมาชิก</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginForm">
+        <input type="text" id="loginEmail" placeholder="อีเมล">
+        <input type="password" id="loginPassword" placeholder="รหัสผ่าน">
+        <button class="btn-main" style="width: 100%;" onclick="doLogin()">เข้าสู่ระบบ</button>
+        <div id="loginError" style="color: var(--red); font-size: 0.85rem; margin-top: 10px;"></div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerForm" style="display: none;">
+        <input type="text" id="registerName" placeholder="ชื่อ">
+        <input type="text" id="registerEmail" placeholder="อีเมล">
+        <input type="password" id="registerPassword" placeholder="รหัสผ่าน">
+        <input type="password" id="registerPasswordConfirm" placeholder="ยืนยันรหัสผ่าน">
+        <button class="btn-main" style="width: 100%;" onclick="doRegister()">สมัครสมาชิก</button>
+        <div id="registerError" style="color: var(--red); font-size: 0.85rem; margin-top: 10px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Dashboard -->
+  <div id="mainPage" class="hidden">
+    <div class="container">
+      <div class="header">
+        <div class="logo">
+          <h1>🏫 M5/1</h1>
+        </div>
+        <div id="todayDate"></div>
+        <div class="top-actions">
+          <button class="setting-btn" onclick="openSettings()">⚙️ ตั้งค่า</button>
+          <button class="logout-btn" onclick="doLogout()">ออกจากระบบ</button>
+        </div>
+      </div>
+
+      <div id="mainContent"></div>
+    </div>
+  </div>
+
+  <!-- Status Box -->
+  <div id="statusBox" class="status-box hidden"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1500;
+  ">
+    <div style="background: white; padding: 30px; border-radius: 20px; text-align: center;">
+      <div class="loading-spinner" style="margin: 0 auto; margin-bottom: 15px;"></div>
+      <p id="loadingMsg">กำลังโหลด...</p>
+    </div>
+  </div>
+
+  <!-- Separate Scripts -->
+  <script src="js/config.js"></script>
+  <script src="js/firebase-init.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/firestore.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+</html>
